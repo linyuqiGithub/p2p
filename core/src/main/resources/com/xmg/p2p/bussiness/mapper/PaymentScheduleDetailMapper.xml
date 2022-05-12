@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xmg.p2p.bussiness.mapper.PaymentScheduleDetailMapper" >
+  <resultMap id="BaseResultMap" type="com.xmg.p2p.bussiness.domain.PaymentScheduleDetail" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="bidAmount" property="bidAmount" jdbcType="DECIMAL" />
+    <result column="bidId" property="bidId" jdbcType="BIGINT" />
+    <result column="totalAmount" property="totalAmount" jdbcType="DECIMAL" />
+    <result column="principal" property="principal" jdbcType="DECIMAL" />
+    <result column="interest" property="interest" jdbcType="DECIMAL" />
+    <result column="monthIndex" property="monthIndex" jdbcType="TINYINT" />
+    <result column="deadline" property="deadline" jdbcType="TIMESTAMP" />
+    <result column="bidrequest_id" property="bidRequestId" jdbcType="BIGINT" />
+    <result column="paydate" property="payDate" jdbcType="TIMESTAMP" />
+    <result column="returntype" property="returnType" jdbcType="TINYINT" />
+    <result column="paymentscheduleId" property="paymentScheduleId" jdbcType="BIGINT" />
+    <!--<result column="fromLogininfo_id" property="fromLogininfo.id" jdbcType="BIGINT" />-->
+    <result column="toLogininfoId" property="toLogininfoId" jdbcType="BIGINT" />
+    <association property="fromLogininfo" columnPrefix="lo_" javaType="com.xmg.p2p.base.domain.Logininfo">
+      <id column="id" property="id"/>
+      <result column="username" property="username"/>
+    </association>
+  </resultMap>
+
+  <insert id="insert" parameterType="com.xmg.p2p.bussiness.domain.PaymentScheduleDetail" useGeneratedKeys="true" keyProperty="id" >
+    insert into PaymentScheduleDetail (bidAmount, bidId, totalAmount, 
+      principal, interest, monthIndex, 
+      deadline, bidrequest_id, paydate, 
+      returntype, paymentscheduleId, fromLogininfo_id, 
+      toLogininfoId)
+    values (#{bidAmount,jdbcType=DECIMAL}, #{bidId,jdbcType=BIGINT}, #{totalAmount,jdbcType=DECIMAL},
+      #{principal,jdbcType=DECIMAL}, #{interest,jdbcType=DECIMAL}, #{monthIndex,jdbcType=TINYINT},
+      #{deadline,jdbcType=TIMESTAMP}, #{bidRequestId,jdbcType=BIGINT}, #{payDate,jdbcType=TIMESTAMP},
+      #{returnType,jdbcType=TINYINT}, #{paymentScheduleId,jdbcType=BIGINT}, #{fromLogininfo.id,jdbcType=BIGINT},
+      #{toLogininfoId,jdbcType=BIGINT})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.xmg.p2p.bussiness.domain.PaymentScheduleDetail" >
+    update PaymentScheduleDetail
+    set bidAmount = #{bidamount,jdbcType=DECIMAL},
+      bidId = #{bidId,jdbcType=BIGINT},
+      totalAmount = #{totalAmount,jdbcType=DECIMAL},
+      principal = #{principal,jdbcType=DECIMAL},
+      interest = #{interest,jdbcType=DECIMAL},
+      monthIndex = #{monthIndex,jdbcType=TINYINT},
+      deadline = #{deadline,jdbcType=TIMESTAMP},
+      bidrequest_id = #{bidRequestId,jdbcType=BIGINT},
+      paydate = #{payDate,jdbcType=TIMESTAMP},
+      returntype = #{returnType,jdbcType=TINYINT},
+      paymentscheduleId = #{paymentScheduleId,jdbcType=BIGINT},
+      fromLogininfo_id = #{fromLogininfo.id,jdbcType=BIGINT},
+      toLogininfoId = #{toLogininfoId,jdbcType=BIGINT}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select pd.id, pd.bidAmount, pd.bidId, pd.totalAmount, pd.principal, pd.interest, pd.monthIndex, pd.deadline,
+    pd.bidrequest_id, pd.paydate, pd.returntype, pd.paymentscheduleId,pd.toLogininfoId,lo.id as lo_id,lo.username as lo_username
+    from PaymentScheduleDetail pd
+    LEFT JOIN logininfo lo ON pd.fromLogininfo_id = lo.id
+    where pd.id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap" >
+   select pd.id, pd.bidAmount, pd.bidId, pd.totalAmount, pd.principal, pd.interest, pd.monthIndex, pd.deadline,
+    pd.bidrequest_id, pd.paydate, pd.returntype, pd.paymentscheduleId,pd.toLogininfoId,lo.id as lo_id,lo.username as lo_username
+    from PaymentScheduleDetail pd
+    LEFT JOIN logininfo lo ON pd.fromLogininfo_id = lo.id
+  </select>
+
+  <select id="selectByPaymentId" resultMap="BaseResultMap">
+    select pd.id, pd.bidAmount, pd.bidId, pd.totalAmount, pd.principal, pd.interest, pd.monthIndex, pd.deadline,
+    pd.bidrequest_id, pd.paydate, pd.returntype, pd.paymentscheduleId,pd.toLogininfoId,lo.id as lo_id,lo.username as lo_username
+    from PaymentScheduleDetail pd
+    LEFT JOIN logininfo lo ON pd.fromLogininfo_id = lo.id
+    WHERE pd.paymentscheduleId = #{id}
+  </select>
+  <update id="updatePayDate">
+    UPDATE PaymentScheduleDetail SET paydate = #{paydate} WHERE paymentscheduleId = #{paymentscheduleId}
+  </update>
+</mapper>

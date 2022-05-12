@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xmg.p2p.bussiness.mapper.AccountFlowMapper">
+    <resultMap id="BaseResultMap" type="com.xmg.p2p.bussiness.domain.AccountFlow">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="accountActionType" property="accountActionType" jdbcType="TINYINT"/>
+        <result column="amount" property="amount" jdbcType="DECIMAL"/>
+        <result column="note" property="note" jdbcType="VARCHAR"/>
+        <result column="balance" property="balance" jdbcType="DECIMAL"/>
+        <result column="freezed" property="freezed" jdbcType="DECIMAL"/>
+        <result column="actionTime" property="actionTime" jdbcType="TIMESTAMP"/>
+        <!--<result column="account_id" property="accountId" jdbcType="BIGINT" />-->
+        <association property="account" javaType="com.xmg.p2p.base.domain.Account" columnPrefix="ac_">
+            <id column="id" property="id"/>
+        </association>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into AccountFlow (accountActionType, amount, note,
+                                 balance, freezed, actionTime,
+                                 account_id)
+        values (#{accountActionType,jdbcType=TINYINT}, #{amount,jdbcType=DECIMAL}, #{note,jdbcType=VARCHAR},
+                #{balance,jdbcType=DECIMAL}, #{freezed,jdbcType=DECIMAL}, #{actionTime,jdbcType=TIMESTAMP},
+                #{account.id,jdbcType=BIGINT})
+    </insert>
+    <update id="updateByPrimaryKey" parameterType="com.xmg.p2p.bussiness.domain.AccountFlow">
+        update AccountFlow
+        set accountActionType = #{accountActionType,jdbcType=TINYINT},
+            amount            = #{amount,jdbcType=DECIMAL},
+            note              = #{note,jdbcType=VARCHAR},
+            balance           = #{balance,jdbcType=DECIMAL},
+            freezed           = #{freezed,jdbcType=DECIMAL},
+            actionTime        = #{actiontime,jdbcType=TIMESTAMP},
+            account_id        = #{account.id,jdbcType=BIGINT}
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select af.id,
+               af.accountActionType,
+               af.amount,
+               af.note,
+               af.balance,
+               af.freezed,
+               af.actionTime,
+               ac.id as ac_id
+        from AccountFlow af
+                 LEFT JOIN account ac ON af.account_id = ac.id
+        where ac.id = #{id,jdbcType=BIGINT}
+    </select>
+    <select id="selectAll" resultMap="BaseResultMap">
+        select id,
+               accountActionType,
+               amount,
+               note,
+               balance,
+               freezed,
+               actionTime,
+               account_id
+        from AccountFlow
+    </select>
+
+    <sql id="where_sql">
+        <where>
+            <if test="accountId != null">
+                AND account_id = #{accountId}
+            </if>
+        </where>
+    </sql>
+
+    <select id="queryAccountFlow" resultMap="BaseResultMap">
+        select id, accountActionType, amount, note, balance, freezed, actionTime, account_id as ac_id
+        from AccountFlow
+        <include refid="where_sql"/>
+        limit #{start},#{pageSize}
+    </select>
+
+    <select id="queryForCount" resultType="java.lang.Integer">
+        select COUNT(id) FROM AccountFlow
+        <include refid="where_sql"/>
+    </select>
+</mapper>

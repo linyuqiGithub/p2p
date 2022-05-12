@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xmg.p2p.bussiness.mapper.SystemAccountMapper" >
+  <resultMap id="BaseResultMap" type="com.xmg.p2p.bussiness.domain.SystemAccount" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="version" property="version" jdbcType="INTEGER" />
+    <result column="totalbalance" property="totalBalance" jdbcType="DECIMAL" />
+    <result column="freezedamount" property="freezedAmount" jdbcType="DECIMAL" />
+  </resultMap>
+
+  <insert id="insert" parameterType="com.xmg.p2p.bussiness.domain.SystemAccount" useGeneratedKeys="true" keyProperty="id" >
+    insert into SystemAccount (version, totalbalance, freezedamount
+      )
+    values (0, #{totalBalance,jdbcType=DECIMAL}, #{freezedAmount,jdbcType=DECIMAL}
+      )
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.xmg.p2p.bussiness.domain.SystemAccount" >
+    update SystemAccount
+    set version = version + 1,
+      totalbalance = #{totalBalance,jdbcType=DECIMAL},
+      freezedamount = #{freezedAmount,jdbcType=DECIMAL}
+    where id = #{id,jdbcType=BIGINT} and version = #{version}
+  </update>
+
+
+  <select id="selectCurrent" resultType="com.xmg.p2p.bussiness.domain.SystemAccount">
+    select id, version, totalbalance, freezedamount
+    from SystemAccount
+  </select>
+</mapper>

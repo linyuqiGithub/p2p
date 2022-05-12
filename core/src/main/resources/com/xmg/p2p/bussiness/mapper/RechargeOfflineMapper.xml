@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xmg.p2p.bussiness.mapper.RechargeOfflineMapper" >
+  <resultMap id="BaseResultMap" type="com.xmg.p2p.bussiness.domain.RechargeOffline" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="state" property="state" jdbcType="TINYINT" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="auditTime" property="auditTime" jdbcType="TIMESTAMP" />
+    <result column="applyTime" property="applyTime" jdbcType="TIMESTAMP" />
+    <!--<result column="auditor_id" property="auditorId" jdbcType="BIGINT" />
+    <result column="applier_id" property="applierId" jdbcType="BIGINT" />-->
+    <result column="tradeCode" property="tradeCode" jdbcType="VARCHAR" />
+    <result column="tradeTime" property="tradeTime" jdbcType="TIMESTAMP" />
+    <result column="amount" property="amount" jdbcType="DECIMAL" />
+    <result column="note" property="note" jdbcType="VARCHAR" />
+    <association property="applier" javaType="com.xmg.p2p.base.domain.Logininfo" columnPrefix="ap_">
+      <id column="id" property="id"/>
+      <result column="username" property="username"/>
+    </association>
+    <association property="auditor" javaType="com.xmg.p2p.base.domain.Logininfo" columnPrefix="au_">
+      <id column="id" property="id"/>
+      <result column="username" property="username"/>
+    </association>
+    <association property="bankinfo" columnPrefix="b_" resultMap="com.xmg.p2p.bussiness.mapper.PlatFormBankMapper.BaseResultMap"/>
+  </resultMap>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id" >
+    insert into RechargeOffline (state, remark, auditTime, 
+      applyTime, auditor_id, applier_id, 
+      tradeCode, tradeTime, amount, 
+      note, bankinfo_id)
+    values (#{state,jdbcType=TINYINT}, #{remark,jdbcType=VARCHAR}, #{auditTime,jdbcType=TIMESTAMP},
+      #{applyTime,jdbcType=TIMESTAMP}, #{auditor.id,jdbcType=BIGINT}, #{applier.id,jdbcType=BIGINT},
+      #{tradeCode,jdbcType=VARCHAR}, #{tradeTime,jdbcType=TIMESTAMP}, #{amount,jdbcType=DECIMAL},
+      #{note,jdbcType=VARCHAR}, #{bankinfo.id,jdbcType=BIGINT})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.xmg.p2p.bussiness.domain.RechargeOffline" >
+    update RechargeOffline
+    set state = #{state,jdbcType=TINYINT},
+      remark = #{remark,jdbcType=VARCHAR},
+      auditTime = #{auditTime,jdbcType=TIMESTAMP},
+      applyTime = #{applyTime,jdbcType=TIMESTAMP},
+      auditor_id = #{auditor.id,jdbcType=BIGINT},
+      applier_id = #{applier.id,jdbcType=BIGINT},
+      tradeCode = #{tradeCode,jdbcType=VARCHAR},
+      tradeTime = #{tradeTime,jdbcType=TIMESTAMP},
+      amount = #{amount,jdbcType=DECIMAL},
+      note = #{note,jdbcType=VARCHAR},
+      bankinfo_id = #{bankinfo.id,jdbcType=BIGINT}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select <include refid="base_column"/>
+    from <include refid="base_table"/>
+    where rl.id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap" >
+    select <include refid="base_column"/>
+    from <include refid="base_table"/>
+  </select>
+
+  <sql id="base_column">
+    rl.id, rl.state, rl.remark, rl.auditTime, rl.applyTime, rl.tradeCode,
+    rl.tradeTime, rl.amount, rl.note,
+    auditor.id as au_id ,auditor.username as au_username,
+    applier.id as ap_id, applier.username as ap_username,
+    b.id as b_id,b.bankName as b_bankName,
+    b.accountName as b_accountNamae,b.bankNumber as b_bankNumber,
+    b.forkName as b_forkName
+  </sql>
+  <sql id="base_table">
+    RechargeOffline rl
+    left join logininfo applier on rl.applier_id = applier.id
+    left join logininfo auditor on rl.auditor_id = auditor.id
+    left join platformbank b on rl.bankinfo_id = b.id
+  </sql>
+  <sql id="where_sql">
+    <where>
+      <if test="state != -1">
+        AND rl.state = #{state}
+      </if>
+      <if test="beginDate != null">
+        AND rl.applyTime &gt;= #{beginDate}
+      </if>
+      <if test="endDate != null">
+        AND rl.applyTime &lt;= #{endDate}
+      </if>
+      <if test="bankinfoId != -1">
+        AND b.id = #{bankinfoId}
+      </if>
+      <if test="tradeCode != '' ">
+        AND rl.tradeCode = #{tradeCode}
+      </if>
+      <if test="userId != null">
+        AND rl.applier_id = #{userId}
+      </if>
+
+    </where>
+  </sql>
+
+  <select id="queryForCount" resultType="int">
+     SELECT COUNT(rl.id) FROM RechargeOffline rl <include refid="where_sql"/>
+  </select>
+
+  <select id="queryForData" resultMap="BaseResultMap">
+     select <include refid="base_column"/>
+     from <include refid="base_table"/>
+     <include refid="where_sql"/>
+     limit #{start},#{pageSize}
+  </select>
+</mapper>

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xmg.p2p.bussiness.mapper.BidRequestMapper" >
+  <resultMap id="BaseResultMap" type="com.xmg.p2p.bussiness.domain.BidRequest" >
+    <id column="br_id" property="id" jdbcType="BIGINT" />
+    <result column="version" property="version" jdbcType="INTEGER" />
+    <result column="bidRequestType" property="bidRequestType" jdbcType="TINYINT" />
+    <result column="bidRequestState" property="bidRequestState" jdbcType="TINYINT" />
+    <result column="bidRequestAmount" property="bidRequestAmount" jdbcType="DECIMAL" />
+    <result column="currentRate" property="currentRate" jdbcType="DECIMAL" />
+    <result column="monthes2Return" property="monthes2Return" jdbcType="TINYINT" />
+    <result column="bidCount" property="bidCount" jdbcType="INTEGER" />
+    <result column="totalRewardAmount" property="totalRewardAmount" jdbcType="DECIMAL" />
+    <result column="currentSum" property="currentSum" jdbcType="DECIMAL" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="description" property="description" jdbcType="VARCHAR" />
+    <result column="note" property="note" jdbcType="VARCHAR" />
+    <result column="disableDate" property="disableDate" jdbcType="TIMESTAMP" />
+   <!-- <result column="createuser_id" property="createuserId" jdbcType="BIGINT" />-->
+    <result column="disableDays" property="disableDays" jdbcType="TINYINT" />
+    <result column="minBidAmount" property="minBidAmount" jdbcType="DECIMAL" />
+    <result column="applyTime" property="applyTime" jdbcType="TIMESTAMP" />
+    <result column="publishTime" property="publishTime" jdbcType="TIMESTAMP" />
+    <result column="returnType" property="returnType" jdbcType="TINYINT" />
+    <association property="createUser" javaType="com.xmg.p2p.base.domain.Logininfo" columnPrefix="lo_">
+      <id property="id" column="id"/>
+      <result property="username" column="username"/>
+    </association>
+    <collection property="bids" ofType="com.xmg.p2p.bussiness.domain.Bid" column="br_id"
+                select="com.xmg.p2p.bussiness.mapper.BidMapper.selectByBidRequestId"/>
+  </resultMap>
+
+  <insert id="insert" parameterType="com.xmg.p2p.bussiness.domain.BidRequest" useGeneratedKeys="true" keyProperty="id" >
+    insert into BidRequest (version, bidRequestType, bidRequestState,
+      bidRequestAmount, currentRate, monthes2Return,
+      bidCount, totalRewardAmount, currentSum, 
+      title, description, note, 
+      disableDate, createuser_id, disableDays, 
+      minBidAmount, applyTime, publishTime,
+      returnType)
+    values (#{version,jdbcType=INTEGER}, #{bidRequestType,jdbcType=TINYINT}, #{bidRequestState,jdbcType=TINYINT},
+      #{bidRequestAmount,jdbcType=DECIMAL}, #{currentRate,jdbcType=DECIMAL}, #{monthes2Return,jdbcType=TINYINT},
+      #{bidCount,jdbcType=INTEGER}, #{totalRewardAmount,jdbcType=DECIMAL}, #{currentSum,jdbcType=DECIMAL},
+      #{title,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, #{note,jdbcType=VARCHAR}, 
+      #{disableDate,jdbcType=TIMESTAMP}, #{createUser.id,jdbcType=BIGINT}, #{disableDays,jdbcType=TINYINT},
+      #{minBidAmount,jdbcType=DECIMAL}, #{applyTime,jdbcType=TIMESTAMP}, #{publishTime,jdbcType=TIMESTAMP},
+      #{returnType,jdbcType=TINYINT})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.xmg.p2p.bussiness.domain.BidRequest" >
+    update BidRequest
+    set version = version + 1,
+      bidRequestType = #{bidRequestType,jdbcType=TINYINT},
+      bidRequestState = #{bidRequestState,jdbcType=TINYINT},
+      bidRequestAmount = #{bidRequestAmount,jdbcType=DECIMAL},
+      currentRate = #{currentRate,jdbcType=DECIMAL},
+      monthes2Return = #{monthes2Return,jdbcType=TINYINT},
+      bidCount = #{bidCount,jdbcType=INTEGER},
+      totalRewardAmount = #{totalRewardAmount,jdbcType=DECIMAL},
+      currentSum = #{currentSum,jdbcType=DECIMAL},
+      title = #{title,jdbcType=VARCHAR},
+      description = #{description,jdbcType=VARCHAR},
+      note = #{note,jdbcType=VARCHAR},
+      disableDate = #{disableDate,jdbcType=TIMESTAMP},
+      createuser_id = #{createUser.id,jdbcType=BIGINT},
+      disableDays = #{disableDays,jdbcType=TINYINT},
+      minBidAmount = #{minBidAmount,jdbcType=DECIMAL},
+      applyTime = #{applyTime,jdbcType=TIMESTAMP},
+      publishTime = #{publishTime,jdbcType=TIMESTAMP},
+      returnType = #{returnType,jdbcType=TINYINT}
+    where id = #{id,jdbcType=BIGINT} and version = #{version}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select br.id as br_id, br.version, br.bidRequestType, br.bidRequestState, br.bidRequestAmount, br.currentRate,
+    br.monthes2Return, br.bidCount, br.totalRewardAmount, br.currentSum, br.title, br.description, br.note,
+    br.disableDate, lo.id as lo_id,lo.username as lo_username, br.disableDays, br.minBidAmount, br.applyTime, br.publishTime, br.returnType
+    from BidRequest br
+    JOIN logininfo lo ON lo.id = br.createuser_id
+    where br.id = #{id,jdbcType=BIGINT}
+  </select>
+
+  <sql id="where_sql">
+    <where>
+      <if test="bidRequestState != -1">
+        AND br.bidRequestState = #{bidRequestState}
+      </if>
+      <if test="bidRequestStates != null">
+        AND br.bidRequestState in
+      <foreach collection="bidRequestStates" open="(" item="item" separator="," close=")">
+          #{item}
+      </foreach>
+      </if>
+      <if test="createUserId != null">
+        AND br.createuser_id = #{createUserId}
+      </if>
+    </where>
+  </sql>
+
+  <select id="queryForCount" resultType="int">
+    SELECT COUNT(br.id) FROM BidRequest br <include refid="where_sql"/>
+  </select>
+
+  <select id="queryForData" resultMap="BaseResultMap">
+    select br.id as br_id, br.version, br.bidRequestType, br.bidRequestState, br.bidRequestAmount, br.currentRate,
+    br.monthes2Return, br.bidCount, br.totalRewardAmount, br.currentSum, br.title, br.description, br.note,
+    br.disableDate, lo.id as lo_id,lo.username as lo_username, br.disableDays, br.minBidAmount, br.applyTime, br.publishTime, br.returnType
+    from BidRequest br
+    JOIN logininfo lo ON lo.id = br.createuser_id
+    <include refid="where_sql"/>
+    <if test="orderBy != null">
+      ORDER BY ${orderBy}
+    </if>
+    <if test="orderByType != null">
+      ${orderByType}
+    </if>
+    limit #{start},#{pageSize}
+  </select>
+
+
+
+
+</mapper>

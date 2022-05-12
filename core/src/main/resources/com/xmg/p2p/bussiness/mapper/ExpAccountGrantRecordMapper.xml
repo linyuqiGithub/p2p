@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xmg.p2p.bussiness.mapper.ExpAccountGrantRecordMapper" >
+  <resultMap id="BaseResultMap" type="com.xmg.p2p.bussiness.domain.ExpAccountGrantRecord" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="grantUserId" property="grantUserId" jdbcType="BIGINT" />
+    <result column="amount" property="amount" jdbcType="VARCHAR" />
+    <result column="grantDate" property="grantDate" jdbcType="TIMESTAMP" />
+    <result column="returnDate" property="returnDate" jdbcType="TIMESTAMP" />
+    <result column="grantType" property="grantType" jdbcType="TINYINT" />
+    <result column="note" property="note" jdbcType="VARCHAR" />
+    <result column="state" property="state" jdbcType="VARCHAR" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long" >
+    delete from expaccountgrantrecord
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id" >
+    insert into expaccountgrantrecord (grantUserId, amount, grantDate, 
+      returnDate, grantType, note, 
+      state)
+    values (#{grantUserId,jdbcType=BIGINT}, #{amount,jdbcType=VARCHAR}, #{grantDate,jdbcType=TIMESTAMP},
+      #{returnDate,jdbcType=TIMESTAMP}, #{grantType,jdbcType=TINYINT}, #{note,jdbcType=VARCHAR},
+      #{state,jdbcType=VARCHAR})
+  </insert>
+  <update id="updateByPrimaryKey" >
+    update expaccountgrantrecord
+    set grantUserId = #{grantUserId,jdbcType=BIGINT},
+      amount = #{amount,jdbcType=VARCHAR},
+      grantDate = #{grantDate,jdbcType=TIMESTAMP},
+      returnDate = #{returnDate,jdbcType=TIMESTAMP},
+      grantType = #{grantType,jdbcType=TINYINT},
+      note = #{note,jdbcType=VARCHAR},
+      state = #{state,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select id, grantUserId, amount, grantDate, returnDate, grantType, note, state
+    from expaccountgrantrecord
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap" >
+    select id, grantUserId, amount, grantDate, returnDate, grantType, note, state
+    from expaccountgrantrecord
+  </select>
+</mapper>

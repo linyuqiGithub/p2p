@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xmg.p2p.bussiness.mapper.BidRequestAuditMapper" >
+  <resultMap id="BaseResultMap" type="com.xmg.p2p.bussiness.domain.BidRequestAudit" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="state" property="state" jdbcType="TINYINT" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="auditTime" property="auditTime" jdbcType="TIMESTAMP" />
+    <result column="applyTime" property="applyTime" jdbcType="TIMESTAMP" />
+   <!-- <result column="auditor_id" property="auditorId" jdbcType="BIGINT" />
+    <result column="applier_id" property="applierId" jdbcType="BIGINT" />-->
+    <result column="bidRequestId" property="bidRequestId" jdbcType="BIGINT" />
+    <result column="auditType" property="auditType" jdbcType="TINYINT" />
+    <association property="auditor" javaType="com.xmg.p2p.base.domain.Logininfo" columnPrefix="au_">
+      <id property="id" column="id"/>
+      <result property="username" column="username"/>
+    </association>
+    <association property="applier" javaType="com.xmg.p2p.base.domain.Logininfo" columnPrefix="ap_">
+      <id property="id" column="id"/>
+      <result property="username" column="username"/>
+    </association>
+  </resultMap>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id" >
+    insert into bidrequestaudit (state, remark, auditTime, 
+      applyTime, auditor_id, applier_id, 
+      bidRequestId, auditType)
+    values (#{state,jdbcType=TINYINT}, #{remark,jdbcType=VARCHAR}, #{auditTime,jdbcType=TIMESTAMP},
+      #{applyTime,jdbcType=TIMESTAMP}, #{auditor.id,jdbcType=BIGINT}, #{applier.id,jdbcType=BIGINT},
+      #{bidRequestId,jdbcType=BIGINT}, #{auditType,jdbcType=TINYINT})
+  </insert>
+
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select bq.id, bq.state, bq.remark, bq.auditTime, bq.applyTime, bq.bidRequestId,bq.auditType,
+    auditor.id as au_id ,auditor.username as au_username,
+    applier.id as ap_id, applier.username as ap_username
+    from bidrequestaudit bq
+    join logininfo applier on bq.applier_id = applier.id
+    join logininfo auditor on bq.auditor_id = auditor.id
+    where bq.id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+   select bq.id, bq.state, bq.remark, bq.auditTime, bq.applyTime, bq.bidRequestId,bq.auditType,
+    auditor.id as au_id ,auditor.username as au_username,
+    applier.id as ap_id, applier.username as ap_username
+    from bidrequestaudit bq
+    join logininfo applier on bq.applier_id = applier.id
+    join logininfo auditor on bq.auditor_id = auditor.id
+  </select>
+
+  <select id="selectByBidRequestId" resultMap="BaseResultMap">
+    select bq.id, bq.state, bq.remark, bq.auditTime, bq.applyTime, bq.bidRequestId,bq.auditType,
+           auditor.id as au_id ,auditor.username as au_username,
+           applier.id as ap_id, applier.username as ap_username
+    from bidrequestaudit bq
+           join logininfo applier on bq.applier_id = applier.id
+           join logininfo auditor on bq.auditor_id = auditor.id
+    where bq.bidRequestId = #{id}
+  </select>
+  <!-- <sql id="where_sql">
+     <where>
+       <if test="bidRequestState != -1">
+         AND auditType = #{bidRequestState}
+       </if>
+     </where>
+   </sql>
+
+   <select id="queryForCount" resultType="int">
+     SELECT COUNT(bq.id) FROM bidrequestaudit bq
+   </select>-->
+</mapper>

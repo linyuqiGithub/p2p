@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xmg.p2p.base.mapper.VideoAuthMapper" >
+    <resultMap id="BaseResultMap" type="com.xmg.p2p.base.domain.VideoAuth" >
+        <id column="id" property="id" jdbcType="BIGINT" />
+        <result column="state" property="state" jdbcType="TINYINT" />
+        <result column="remark" property="remark" jdbcType="VARCHAR" />
+        <result column="auditTime" property="auditTime" jdbcType="TIMESTAMP" />
+        <result column="applyTime" property="applyTime" jdbcType="TIMESTAMP" />
+         <association property="auditor" javaType="com.xmg.p2p.base.domain.Logininfo" columnPrefix="au_">
+           <id column="id" property="id"/>
+           <result column="username" property="username"/>
+         </association>
+         <association property="applier" javaType="com.xmg.p2p.base.domain.Logininfo" columnPrefix="ap_">
+           <id column="id" property="id"/>
+           <result column="username" property="username"/>
+         </association>
+
+    </resultMap>
+
+     <insert id="insert" useGeneratedKeys="true" keyProperty="id" >
+       insert into VideoAuth (state, remark, auditTime,
+         applyTime, auditor_id, applier_id
+         )
+       values (#{state,jdbcType=TINYINT}, #{remark,jdbcType=VARCHAR}, #{auditTime,jdbcType=TIMESTAMP},
+         #{applyTime,jdbcType=TIMESTAMP}, #{auditor.id,jdbcType=BIGINT}, #{applier.id,jdbcType=BIGINT}
+         )
+     </insert>
+
+     <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+       select va.id, va.state, va.remark,
+       va.auditTime, va.applyTime,
+        au.id as au_id, au.username as au_username,
+        ap.id as ap_id, ap.username as ap_username
+       from VideoAuth va
+       JOIN logininfo au ON va.auditor_id = au.id
+       JOIN logininfo ap ON va.applier_id = ap.id
+       where va.id = #{id,jdbcType=BIGINT}
+     </select>
+
+     <sql id="where_sql">
+         <where>
+             <if test="state !=-1">
+                 AND va.state = #{state}
+             </if>
+             <if test="keyword !=null">
+                 AND ap.username LIKE concat('%',#{keyword},'%')
+             </if>
+             <if test="beginDate !=null">
+                 AND va.applyTime &gt;= #{beginDate}
+             </if>
+             <if test="endDate !=null">
+                 AND va.applyTime &lt;= #{endDate}
+             </if>
+
+         </where>
+     </sql>
+
+     <select id="queryForCount" resultType="int">
+         SELECT COUNT(va.id) FROM VideoAuth va <include refid="where_sql"/>
+     </select>
+
+    <select id="queryForData" resultMap="BaseResultMap">
+         select va.id, va.state, va.remark,
+       va.auditTime, va.applyTime,
+        au.id as au_id, au.username as au_username,
+        ap.id as ap_id, ap.username as ap_username
+       from VideoAuth va
+       JOIN logininfo au ON va.auditor_id = au.id
+       JOIN logininfo ap ON va.applier_id = ap.id
+       <include refid="where_sql"/>
+        limit #{start},#{pageSize}
+    </select>
+
+
+</mapper>

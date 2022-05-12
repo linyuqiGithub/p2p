@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+			http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+			http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+			http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+	<!-- 0.开启注解扫描 -->
+	<context:component-scan base-package="com.xmg.p2p"/>
+	<!-- 1.读取数据库配置文件,短信邮箱网关等相关配置文件(跨域调用配置文件时，一定要在classpath后加个*) -->
+	<context:property-placeholder location="classpath*:*.properties" system-properties-mode="NEVER"/>
+	<!-- 2.数据库连接池 -->
+	<!--2.1配置主DataSource-->
+	<bean id="masterds" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driverClassName}"/>
+		<property name="url" value="${jdbc.url}"/>
+		<property name="username" value="${jdbc.username}"/>
+		<property name="password" value="${jdbc.password}"/>
+	</bean>
+	<!--2.2配置从DataSource-->
+	<bean id="slaveds" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="driverClassName" value="${jdbc2.driverClassName}"/>
+		<property name="url" value="${jdbc2.url}"/>
+		<property name="username" value="${jdbc2.username}"/>
+		<property name="password" value="${jdbc2.password}"/>
+	</bean>
+	<!--2.3配置SqlSessionFactory需要使用的DataSource-->
+	<bean id="dataSource" class="com.xmg.p2p.base.util.P2PRoutingDataSource">
+		<!--配置路由DS的目标DS-->
+		<property name="targetDataSources">
+			<map>
+				<entry key="masterds" value-ref="masterds"/>
+				<entry key="slaveds" value-ref="slaveds" />
+			</map>
+		</property>
+		<!--配置默认的DS-->
+		<property name="defaultTargetDataSource" ref="masterds"/>
+	</bean>
+	<!-- 3.sessionFactory -->
+	<bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 3.1  关联数据库连接池 -->
+		<property name="dataSource" ref="dataSource"/>
+		<!-- 3.2 关联mybatis的配置文件 -->
+		<property name="configLocation" value="classpath:mybatis.cfg.xml"/>
+		<!-- 3.3 扫描别名的包名 -->
+		<property name="typeAliasesPackage" value="com.xmg.p2p.*.domain"/>
+		<!-- 3.4　关联mapper文件 -->
+		<property name="mapperLocations" value="classpath:com/xmg/p2p/*/mapper/*Mapper.xml"/>
+	</bean>
+	<!-- 4.事务管理器 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+
+	<bean id="dataSourceAspect" class="com.xmg.p2p.base.util.DataSourceAspect"/>
+
+	<!-- 5.AOP相关的配置 -->
+	<!-- 定义事务策略 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="get*" read-only="true"/>
+			<tx:method name="query*" read-only="true"/>
+			<tx:method name="select*" read-only="true"/>
+			<tx:method name="list*" read-only="true"/>
+			<tx:method name="*"/>
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:pointcut expression="execution(* com.xmg.p2p.*.service.impl.*.*(..))" id="txPointCut"/>
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointCut"/>
+		<aop:aspect ref="dataSourceAspect" order="-9999">
+			<aop:before method="before" pointcut-ref="txPointCut"/>
+		</aop:aspect>
+	</aop:config>
+
+	<!--<aop:config>
+		<aop:pointcut expression="execution(* com.xmg.p2p.bussiness.service.impl.RechargeOfflineServiceImpl.query())" id="dataSourcePointCut"/>
+		<aop:aspect ref="dataSourceContext" >
+			<aop:before method="setSlaveDS" pointcut-ref="dataSourcePointCut"/>
+		</aop:aspect>
+	</aop:config>-->
+
+	<!-- 扫描mapper接口生成代理类 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.xmg.p2p.*.mapper"/>
+	</bean>
+
+    <!--自定义的定时器-->
+	<bean name="myTimer" class="com.xmg.p2p.base.util.Timer"/>
+	<!--设置调度任务-->
+	<bean id="myTimerTask" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="myTimer"/>
+		<property name="targetMethod" value="timeTask"/>
+		<!--作业不并发调度-->
+		<property name="concurrent" value="false"/>
+	</bean>
+	<!--创建定时任务任务-->
+	<bean id="simpleTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="myTimerTask" />
+		<property name="cronExpression" value="0 42 17 * * ?" />
+	</bean>
+	<!--添加触发器-->
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref bean="simpleTrigger"/>
+			</list>
+		</property>
+	</bean>
+</beans>
